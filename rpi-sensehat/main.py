@@ -17,7 +17,22 @@ MQTT_LAST_WILL_TOPIC = "raspberry/status"
 USERNAME = "rpimqttclienta"
 PASSWORD = "pD2l0bYEw"
 
+def init_mqtt_client(client):
+    # Set username and password
+    client.username_pw_set(USERNAME, PASSWORD)
 
+    # Assign callback functions
+    client.on_connect = on_connect
+    client.on_message = on_message
+    client.on_disconnect = on_disconnect
+    # TODO maybe implement and on_subscribe
+
+    # Last will message
+    last_will_message = "Client " + USERNAME + " has disconnected"
+    client.will_set(MQTT_LAST_WILL_TOPIC, payload=last_will_message, qos=1, retain=False)
+
+    # Connect to the MQTT broker
+    client.connect(MQTT_BROKER, MQTT_PORT)
 
 def fetch_data_sense_hat(sense):
     #col.set_settings_for_colour_sensing(sense, 60, 64)
@@ -26,9 +41,9 @@ def fetch_data_sense_hat(sense):
     pressure = pre.read_pressure(sense)
     temperature = temp.read_temperature(sense)
     humidity =  humi.read_humidity(sense)
-    print(f"Reading temperature: {temperature}C")
-    print(f"Reading humidity: {humidity}%")
-    print(f"Reading pressure: {pressure}")
+    #print(f"Reading temperature: {temperature}C")
+    #print(f"Reading humidity: {humidity}%")
+    #print(f"Reading pressure: {pressure}")
     #print(f"Reading brightness: {brightness}")
     #print(f"Reading colours: Red = {red}, Green = {green}, Blue = {blue}")
 
@@ -44,6 +59,20 @@ def fetch_data_sense_hat(sense):
     }
     return data
 
+
+def on_disconnect(client, userdata, rc):
+    if rc != 0:
+        print("Unexpected disconnection.")
+        # Attempt to reconnect
+        try:
+            print("Trying to reconnect...")
+            client.reconnect()
+        except Exception as e:
+            print(f"Reconnection failed: {e}")
+    else:
+        print("Disconnected successfully.")
+
+
 # Callback when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -53,21 +82,11 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(MQTT_TOPIC)
     else:
         print(f"Failed to connect, return code {rc}\n")
+
 # Callback when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
     print(f"Received message '{msg.payload.decode()}' on topic '{msg.topic}'")
 
-def init_mqtt_client(client):
-    # Set username and password
-    client.username_pw_set(USERNAME, PASSWORD)
-
-    # Assign callback functions
-    client.on_connect = on_connect
-    client.on_message = on_message
-    # TODO maybe implement on_disconnect and on_subscribe
-
-    # Connect to the MQTT broker
-    client.connect(MQTT_BROKER, MQTT_PORT)
 
 def send_readings(topic, message):
     # Publish message on MQTT_TOPIC
@@ -94,25 +113,24 @@ if __name__ == "__main__":
     if mqtt_start:
         # Create MQTT client
         client = mqtt.Client()
+        print("initialize MQTT")
         init_mqtt_client(client)
 
     if mqtt_start:
+        client.loop_start()
         while True:
             data = fetch_data_sense_hat(sense)
-            #sleep(1)
-            # Convert data to JSON
-            #json_data = json.dumps(data)
             send_readings("raspberry/Aarhus/sense-hat/readings", data)
-            sleep(1)
+            sleep(3)
             data = fetch_data_sense_hat(sense)
             send_readings("raspberry/Aalborg/sense-hat/readings",data)
-            sleep(1)
+            sleep(3)
             data = fetch_data_sense_hat(sense)
             send_readings("raspberry/Copenhagen/sense-hat/readings",data)
-            sleep(1)
+            sleep(3)
             data = fetch_data_sense_hat(sense)
             send_readings("raspberry/Silkeborg/sense-hat/readings",data)
-            sleep(1)
+            sleep(3)
             data = fetch_data_sense_hat(sense)
             send_readings("raspberry/Odense/sense-hat/readings",data)
-            sleep(3)
+            sleep(10)
