@@ -1,5 +1,3 @@
-from sense_hat import SenseHat
-
 def read_humidity(sense):
     # sense = SenseHat()
     humidity = sense.get_humidity()

@@ -7,12 +7,12 @@ def set_settings_for_colour_sensing(sense, gain, integration_cycles):
 
     return sense
 
-def get_colours(sense):
+def read_colours(sense):
     red, green, blue, clear = sense.colour.colour # Each colour is an integer between 0 and 255
 
     return  red, green, blue
 
-def get_brightness(sense):
+def read_brightness(sense):
     red, green, blue, brightness = sense.colour.colour
     return brightness
 
