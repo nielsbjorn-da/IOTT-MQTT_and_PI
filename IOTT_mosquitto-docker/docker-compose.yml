@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  mosquitto:
+    container_name: mosquitto_project
+    image: my-improved-mqtt
+    ports:
+      - "8883:8883"
+    volumes:
+      - ./mosquitto-config:/mosquitto/config
+    restart: always
