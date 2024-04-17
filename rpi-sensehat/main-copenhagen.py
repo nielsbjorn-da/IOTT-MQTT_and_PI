@@ -1,11 +1,12 @@
 # Main controller
 from time import sleep
+import time
 import temperature.temperature as temp
 import humidity.humidity as humi
 import colour.colour as col
 import pressure.pressure as pre
 import paho.mqtt.client as mqtt
-from sense_emu import SenseHat #from sense_hat import SenseHat
+from sense_hat import SenseHat #from sense_emu import SenseHat
 import json
 
 # MQTT server details
@@ -13,7 +14,7 @@ mqtt_start = True
 MQTT_BROKER = "mqtt.niels-bjorn.dk"
 MQTT_PORT = 1883 # use 8883 if communication should be encrypted
 MQTT_TOPIC = "test/topic"
-MQTT_LAST_WILL_TOPIC = "raspberry/status"
+MQTT_LAST_WILL_TOPIC = "raspberry/raspberry-copenhagen/status"
 USERNAME = "rpimqttclienta"
 PASSWORD = "pD2l0bYEw"
 
@@ -29,33 +30,34 @@ def init_mqtt_client(client):
 
     # Last will message
     last_will_message = "Client " + USERNAME + " has disconnected"
-    client.will_set(MQTT_LAST_WILL_TOPIC, payload=last_will_message, qos=1, retain=False)
+    client.will_set(MQTT_LAST_WILL_TOPIC, payload=last_will_message, qos=1, retain=True)
 
     # Connect to the MQTT broker
     client.connect(MQTT_BROKER, MQTT_PORT)
 
 def fetch_data_sense_hat(sense):
-    #col.set_settings_for_colour_sensing(sense, 60, 64)
-    #red, green, blue = col.read_colours(sense)
-    #brightness = col.read_brightness(sense)
+    # col.set_settings_for_colour_sensing(sense, 60, 64)
+    # red, green, blue = col.read_colours(sense)
+    # brightness = col.read_brightness(sense)
+
+    # Get sensor data
     pressure = pre.read_pressure(sense)
     temperature = temp.read_temperature(sense)
-    humidity =  humi.read_humidity(sense)
-    #print(f"Reading temperature: {temperature}C")
-    #print(f"Reading humidity: {humidity}%")
-    #print(f"Reading pressure: {pressure}")
-    #print(f"Reading brightness: {brightness}")
-    #print(f"Reading colours: Red = {red}, Green = {green}, Blue = {blue}")
+    humidity = humi.read_humidity(sense)
 
-    # use dictionary to store data
+    # Get the current Unix timestamp
+    current_timestamp = time.time()
+
+    # Dictionary containing the sensor data
     data = {
-        "temperature" : temperature,
-        "humidity" : humidity,
-        "pressure" : pressure
- #       "brightness" : brightness,
- #       "red" : red,
- #       "green" : green,
- #       "blue" : blue
+        "temperature": temperature,
+        "humidity": humidity,
+        "pressure": pressure,
+        "timestamp": current_timestamp
+        #       "brightness" : brightness,
+        #       "red" : red,
+        #       "green" : green,
+        #       "blue" : blue
     }
     return data
 
@@ -80,6 +82,9 @@ def on_connect(client, userdata, flags, rc):
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
         client.subscribe(MQTT_TOPIC)
+
+        # Set status for the raspberry
+        client.publish(MQTT_LAST_WILL_TOPIC, "Raspberry Copenhagen is successfully connected", retain=True)
     else:
         print(f"Failed to connect, return code {rc}\n")
 
@@ -89,16 +94,8 @@ def on_message(client, userdata, msg):
 
 
 def send_readings(topic, message):
-    # Publish message on MQTT_TOPIC
-
+    # Publish sensor values on MQTT_TOPIC
     client.publish(topic + "/all_readings", str(message))
-    client.publish(topic + "/temperature", str(message["temperature"]))
-    client.publish(topic + "/humidity", str(message["humidity"]))
-    client.publish(topic + "/pressure", str(message["pressure"]))
-    #client.publish("raspberry/sense-hat/readings/brightness", message["brightness"])
-    #client.publish("raspberry/sense-hat/readings/colour_red", message["red"])
-    #client.publish("raspberry/sense-hat/readings/colour_green", message["green"])
-    #client.publish("raspberry/sense-hat/readings/colour_blue", message["blue"])
 
 
 if __name__ == "__main__":
@@ -120,17 +117,5 @@ if __name__ == "__main__":
         client.loop_start()
         while True:
             data = fetch_data_sense_hat(sense)
-            send_readings("raspberry/Aarhus/sense-hat/readings", data)
-            sleep(3)
-            data = fetch_data_sense_hat(sense)
-            send_readings("raspberry/Aalborg/sense-hat/readings",data)
-            sleep(3)
-            data = fetch_data_sense_hat(sense)
             send_readings("raspberry/Copenhagen/sense-hat/readings",data)
-            sleep(3)
-            data = fetch_data_sense_hat(sense)
-            send_readings("raspberry/Silkeborg/sense-hat/readings",data)
-            sleep(3)
-            data = fetch_data_sense_hat(sense)
-            send_readings("raspberry/Odense/sense-hat/readings",data)
-            sleep(10)
+            sleep(5)
