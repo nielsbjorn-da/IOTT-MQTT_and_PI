@@ -6,7 +6,7 @@ import humidity.humidity as humi
 import colour.colour as col
 import pressure.pressure as pre
 import paho.mqtt.client as mqtt
-from sense_hat import SenseHat #from sense_emu import SenseHat
+from sense_emu import SenseHat
 import json
 
 # MQTT server details
@@ -103,6 +103,9 @@ def send_readings(topic, message):
 
 if __name__ == "__main__":
     sense = SenseHat()
+    sense.clear()
+    tempa = sense.get_temperature()
+    print(tempa)
     if mqtt_start is False:
         while True:
             data = fetch_data_sense_hat(sense)
