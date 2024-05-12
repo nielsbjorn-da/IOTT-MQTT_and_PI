@@ -14,12 +14,12 @@ mqtt_start = True
 MQTT_BROKER = "mqtt.niels-bjorn.dk"
 MQTT_PORT = 1883 # use 8883 if communication should be encrypted
 MQTT_TOPIC = "test/topic"
-MQTT_LAST_WILL_TOPIC = "raspberry/raspberry-copenhagen/status"
+MQTT_LAST_WILL_TOPIC = "status/raspberry-copenhagen/connection"
 USERNAME = "rpimqttclienta"
 PASSWORD = "pD2l0bYEw"
 
 def init_mqtt_client(client):
-    # Set username and password
+   # Set username and password
     client.username_pw_set(USERNAME, PASSWORD)
 
     # Assign callback functions
@@ -29,7 +29,7 @@ def init_mqtt_client(client):
     # TODO maybe implement and on_subscribe
 
     # Last will message
-    last_will_message = "Client " + USERNAME + " has disconnected"
+    last_will_message = "OFF"
     client.will_set(MQTT_LAST_WILL_TOPIC, payload=last_will_message, qos=1, retain=True)
 
     # Connect to the MQTT broker
@@ -84,9 +84,10 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(MQTT_TOPIC)
 
         # Set status for the raspberry
-        client.publish(MQTT_LAST_WILL_TOPIC, "Raspberry Copenhagen is successfully connected", retain=True)
+        client.publish(MQTT_LAST_WILL_TOPIC, "ON", retain=True)
     else:
         print(f"Failed to connect, return code {rc}\n")
+
 
 # Callback when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):

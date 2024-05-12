@@ -14,9 +14,10 @@ mqtt_start = True
 MQTT_BROKER = "mqtt.niels-bjorn.dk"
 MQTT_PORT = 1883 # use 8883 if communication should be encrypted
 MQTT_TOPIC = "test/topic"
-MQTT_LAST_WILL_TOPIC = "raspberry/raspberry-aalborg/status"
+MQTT_LAST_WILL_TOPIC = "status/raspberry-aalborg/connection"
 USERNAME = "rpimqttclienta"
 PASSWORD = "pD2l0bYEw"
+
 
 def init_mqtt_client(client):
     # Set username and password
@@ -29,11 +30,12 @@ def init_mqtt_client(client):
     # TODO maybe implement and on_subscribe
 
     # Last will message
-    last_will_message = "Raspberry Aalborg has disconnected"
+    last_will_message = "OFF"
     client.will_set(MQTT_LAST_WILL_TOPIC, payload=last_will_message, qos=1, retain=True)
 
     # Connect to the MQTT broker
     client.connect(MQTT_BROKER, MQTT_PORT)
+
 
 def fetch_data_sense_hat(sense):
     # col.set_settings_for_colour_sensing(sense, 60, 64)
@@ -84,8 +86,7 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(MQTT_TOPIC)
 
         # Set status for the raspberry
-        client.publish(MQTT_LAST_WILL_TOPIC, "Raspberry Aalborg is successfully connected", retain=True)
-
+        client.publish(MQTT_LAST_WILL_TOPIC, "ON", retain=True)
     else:
         print(f"Failed to connect, return code {rc}\n")
 
@@ -101,6 +102,7 @@ def send_readings(topic, message):
 
 if __name__ == "__main__":
     sense = SenseHat()
+    sense.clear()
     if mqtt_start is False:
         while True:
             data = fetch_data_sense_hat(sense)
