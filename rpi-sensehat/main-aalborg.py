@@ -50,10 +50,10 @@ def fetch_data_sense_hat(sense):
 
     # Dictionary containing the sensor data
     data = {
-        "temperature": temperature,
-        "humidity": humidity,
-        "pressure": pressure,
-        "timestamp": current_timestamp
+        'temperature': temperature,
+        'humidity': humidity,
+        'pressure': pressure,
+        'timestamp': current_timestamp
         #       "brightness" : brightness,
         #       "red" : red,
         #       "green" : green,
